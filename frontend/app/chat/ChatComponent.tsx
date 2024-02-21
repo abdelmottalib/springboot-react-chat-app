@@ -18,6 +18,9 @@ const ChatComponent = () => {
     const [showNotification, setShowNotification] = useState<boolean>(false);
     const [chatHistory, setChatHistory] = useState<any[]>([]);
     const [unreadMessagesCount, setUnreadMessagesCount] = useState<{ [key: string]: number }>({});
+    const [newUser, setNewUser] = useState<string>('');
+    const [isUserConnected, setIsUserConnected] = useState<boolean>(false);
+    const [isUserDisconnected, setIsUserDisconnected] = useState<boolean>(false);
     const router = useRouter();
     function onMessageReceived(payload: Stomp.Message) {
         findAndDisplayConnectedUsers().then();
@@ -35,11 +38,8 @@ const ChatComponent = () => {
             ...prevCount,
             [message.senderId]: (prevCount[message.senderId] || 0) + 1,
         }));
-        // Update the UI to indicate a new message for the sender (not the active user)
         const notifiedUser = connectedUsers.find((user) => user.nickName === message.senderId);
         if (notifiedUser && selectedUserId !== message.senderId) {
-            // You can implement a notification badge or similar UI update for the sender
-            // For example, increase the count of unread messages for the sender
             const updatedConnectedUsers = connectedUsers.map((user) =>
                 user.nickName === message.senderId ? { ...user, unreadMessages: (user.unreadMessages || 0) + 1 } : user
             );
@@ -60,11 +60,29 @@ const ChatComponent = () => {
         setConnectedUsers(connectedUsers);
     }
 
-    function logTheMessage() {
+    function logTheMessage(payload: Stomp.Message) {
         console.log('the message has been logged')
+        console.log('the payload is', payload.body)
+        const user = JSON.parse(payload.body);
+        findAndDisplayConnectedUsers().then();
+        console.log('the user is', user)
+        setNewUser(user.nickName);
+        if (user.status === 'ONLINE') {
+            console.log('the user is online')
+            setIsUserConnected(true);
+        }
+        else if (user.status === 'OFFLINE') {
+            console.log('the user is offline')
+            setIsUserDisconnected(true);
+        }
+        setTimeout(() => {
+            setIsUserConnected(false);
+            setIsUserDisconnected(false);
+        }, 2000);
+
     }
     function onConnected() {
-        // stompClient?.subscribe(`/topic/public`, logTheMessage);
+        stompClient?.subscribe(`/topic/public`, logTheMessage);
         stompClient?.subscribe(`/user/${nickname}/queue/messages`, onMessageReceived);
         stompClient?.send("/app/user.addUser",
             {},
@@ -82,9 +100,8 @@ const ChatComponent = () => {
     }
 
     useEffect(() => {
-        if (stompClient) {
+        if (stompClient && !stompClient.connected) {
             stompClient.connect({}, onConnected, onError);
-            // stompClient.subscribe('/topic/public', logTheMessage);
         }
     }, [stompClient]);
     useEffect(() => {
@@ -149,10 +166,10 @@ const ChatComponent = () => {
             { senderId, content, timestamp: new Date() },
         ]);
     }
+
     return (
         <div className="h-screen font-sans bg-gray-100 flex flex-col">
             <h2 className="text-center text-2xl font-bold py-8 bg-indigo-600 text-white">{user}</h2>
-
             <div className="flex h-full">
                 {/* Users List */}
                 <div className="w-1/4 bg-white rounded-lg shadow-md p-4 overflow-y-auto flex flex-col justify-between">
@@ -196,6 +213,17 @@ const ChatComponent = () => {
                             Logout
                         </div>
                     </div>
+                    {isUserConnected && (
+                        <div className="absolute bottom-0 mb-4 w-[250px] p-4 bg-green-500 text-white rounded-md shadow-md">
+                            {`${newUser} has joined the chat`}
+                        </div>
+                    )}
+                    {isUserDisconnected && (
+                        <div className="absolute bottom-0 mb-4 w-[250px] p-4 bg-red-500 text-white rounded-md shadow-md">
+                            {`${newUser} has left the chat`}
+                        </div>
+                    )}
+
                 </div>
 
                 {/* Chat Area */}

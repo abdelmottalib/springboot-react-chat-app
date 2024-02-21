@@ -165,7 +165,7 @@ const ChatComponent = () => {
     }
 
     return (
-        <div className="h-screen font-sans bg-gray-100 flex flex-col ">
+        <div className="h-screen font-sans bg-gray-100 flex flex-col h-full">
             <h2 className="text-center text-2xl font-bold py-8 bg-indigo-600 text-white">{user}</h2>
             <div className="flex h-full">
                 {/* Users List */}
@@ -194,7 +194,7 @@ const ChatComponent = () => {
                         {user.nickName}
                                         {unreadMessagesCount[user.nickName] > 0 && (
                                             <span
-                                                className="absolute top-0 right-0 bg-red-500 text-white rounded-full px-2">
+                                                className="absolute top-0 right-0 text-white rounded-full px-2">
                                 {unreadMessagesCount[user.nickName]}
                             </span>
                                         )}
@@ -219,7 +219,7 @@ const ChatComponent = () => {
                     )}
                     {isUserDisconnected && (
                         <div
-                            className="absolute bottom-0 mb-4 w-[250px] p-4 bg-red-500 text-white rounded-md shadow-md">
+                            className="absolute bottom-0 mb-4 w-[250px] p-4 text-white rounded-md shadow-md">
                             {`${newUser} has left the chat`}
                         </div>
                     )}
@@ -228,10 +228,10 @@ const ChatComponent = () => {
 
 
                 {/* Chat Area */}
-                <div className="w-3/4 bg-white max-h-full rounded-lg shadow-md p-4 flex flex-col flex-grow overflow-hidden justify-between">
+                <div className="w-3/4 bg-white max-h-full rounded-lg shadow-md p-4 flex flex-col justify-between overflow-hidden">
                     {selectedUserId ? (
                         <>
-                            <div id="chat-messages" className=" overflow-y-auto mb-4">
+                            <div id="chat-messages" className=" overflow-y-auto mb-4 max-h-[670px]  2xl:max-h-[2350px]">
                                 {chatHistory.map((chat, index) => (
                                     <div
                                         key={index}

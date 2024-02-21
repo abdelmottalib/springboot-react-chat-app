@@ -2,29 +2,9 @@ import {base} from "next/dist/build/webpack/config/blocks/base";
 
 
 // components/RootLayout.js
-import { TokenProvider } from "./TokenProvider";
 import Link from 'next/link';
 import React from "react";
 import './globals.css'
-
-
-const Navbar = () => {
-    return (
-        <nav className="bg-gray-800 p-4 text-white">
-            <div className="container mx-auto flex items-center justify-between">
-                <div className="text-white text-xl font-bold">
-                    <Link href={'/'}>Todo App</Link>
-                </div>
-                <div className="space-x-4">
-                    <Link href={'/register'}>register</Link>
-                    <Link href={'/signin'}>signin</Link>
-                    <Link href={'/logout'}>logout</Link>
-                </div>
-            </div>
-        </nav>
-    );
-};
-
 
 export const metadata = {
     title: "Create Next App",
@@ -39,10 +19,8 @@ export default function RootLayout({
 
     return (
         <html lang="en">
-        <body>
-        <TokenProvider>
+        <body className={''}>
             <div className="">{children}</div>
-        </TokenProvider>
         </body>
         </html>
     );

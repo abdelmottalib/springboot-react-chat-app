@@ -111,7 +111,7 @@ const ChatComponent = () => {
         setFullname(searchParams.get('fullname'));
     }, [searchParams])
 
-    function handleSubmit(event: any) {
+    function handleSubmit(event:React.FormEvent) {
         const messageContent = message.trim();
         // @ts-ignore
         setUnreadMessagesCount((prevCount) => ({...prevCount, [selectedUserId]: 0}));
@@ -165,7 +165,7 @@ const ChatComponent = () => {
     }
 
     return (
-        <div className="h-screen font-sans bg-gray-100 flex flex-col">
+        <div className="h-screen font-sans bg-gray-100 flex flex-col ">
             <h2 className="text-center text-2xl font-bold py-8 bg-indigo-600 text-white">{user}</h2>
             <div className="flex h-full">
                 {/* Users List */}
@@ -226,11 +226,12 @@ const ChatComponent = () => {
 
                 </div>
 
+
                 {/* Chat Area */}
-                <div className="w-3/4 bg-white rounded-lg shadow-md p-4 flex flex-col">
+                <div className="w-3/4 bg-white max-h-full rounded-lg shadow-md p-4 flex flex-col flex-grow overflow-hidden justify-between">
                     {selectedUserId ? (
                         <>
-                            <div id="chat-messages" className="flex-1 overflow-y-auto mb-4">
+                            <div id="chat-messages" className=" overflow-y-auto mb-4">
                                 {chatHistory.map((chat, index) => (
                                     <div
                                         key={index}
@@ -240,17 +241,26 @@ const ChatComponent = () => {
                                     >
                                         <div
                                             className={`bg-gray-200 rounded-lg p-3 ${
-                                                chat.senderId === nickname ? 'self-end bg-indigo-500 text-white' : 'self-start '
+                                                chat.senderId === nickname
+                                                    ? 'self-end bg-indigo-500 text-white'
+                                                    : 'self-start '
                                             }`}
                                         >
                                             {chat.content}
                                         </div>
-                                        <img src="https://i.pravatar.cc/40" alt="User Avatar"
-                                             className="w-8 h-8 rounded-full ml-2"/>
+                                        <img
+                                            src="https://i.pravatar.cc/40"
+                                            alt="User Avatar"
+                                            className="w-8 h-8 rounded-full ml-2"
+                                        />
                                     </div>
                                 ))}
                             </div>
-                            <form id="messageForm" className="flex items-center" onSubmit={handleSubmit}>
+                            <form
+                                id="messageForm"
+                                className="flex items-center"
+                                onSubmit={handleSubmit}
+                            >
                                 <input
                                     type="text"
                                     onChange={(e) => setMessage(e.target.value)}
@@ -268,7 +278,9 @@ const ChatComponent = () => {
                             </form>
                         </>
                     ) : (
-                        <p className="text-center text-gray-500">Select a user to start chatting.</p>
+                        <p className="text-center text-gray-500">
+                            Select a user to start chatting.
+                        </p>
                     )}
                 </div>
             </div>

@@ -7,7 +7,7 @@ export default function SimpleRegister() {
     const [nickname, setNickname] = useState('');
     const [fullname, setFullname] = useState('');
 
-    const handleSubmit = (e:any) => {
+    const handleSubmit = (e:React.FormEvent) => {
         e.preventDefault();
         if (nickname && fullname) {
             router.push(`/chat?nickname=${nickname}&fullname=${fullname}`);

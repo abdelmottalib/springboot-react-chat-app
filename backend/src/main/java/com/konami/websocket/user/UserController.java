@@ -23,7 +23,7 @@ public class UserController {
     public User addUser(
             @Payload User user
     ) {
-        System.out.println("hit the service for add user");
+        
         userService.saveUser(user);
         return user;
     }

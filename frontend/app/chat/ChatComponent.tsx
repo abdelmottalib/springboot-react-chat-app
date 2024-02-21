@@ -4,6 +4,7 @@ import React, {useEffect, useRef, useState} from 'react'
 import SockJS from 'sockjs-client';
 import Stomp, {Client} from 'stompjs';
 import {router} from "next/client";
+
 const ChatComponent = () => {
     const searchParams = useSearchParams();
     const [stompClient, setStompClient] = useState<Client | null>(null);
@@ -22,13 +23,14 @@ const ChatComponent = () => {
     const [isUserConnected, setIsUserConnected] = useState<boolean>(false);
     const [isUserDisconnected, setIsUserDisconnected] = useState<boolean>(false);
     const router = useRouter();
+
     function onMessageReceived(payload: Stomp.Message) {
         findAndDisplayConnectedUsers().then();
         const message = JSON.parse(payload.body);
 
         const selectedUser = selectedUserRef.current;
         if (selectedUser && selectedUser === message.senderId) {
-            console.log("entered the if statement")
+
             displayMessage(message.senderId, message.content);
             showNotificationBanner();
         }
@@ -41,19 +43,21 @@ const ChatComponent = () => {
         const notifiedUser = connectedUsers.find((user) => user.nickName === message.senderId);
         if (notifiedUser && selectedUserId !== message.senderId) {
             const updatedConnectedUsers = connectedUsers.map((user) =>
-                user.nickName === message.senderId ? { ...user, unreadMessages: (user.unreadMessages || 0) + 1 } : user
+                user.nickName === message.senderId ? {...user, unreadMessages: (user.unreadMessages || 0) + 1} : user
             );
             setConnectedUsers(updatedConnectedUsers);
         }
     }
+
     function showNotificationBanner() {
         setShowNotification(true);
         setTimeout(() => {
             setShowNotification(false);
         }, 5000); // Hide notification after 5 seconds
     }
+
     async function findAndDisplayConnectedUsers() {
-        console.log('findAndDisplayConnectedUsers')
+
         const connectedUsersResponse = await fetch('http://localhost:8088/users');
         let connectedUsers = await connectedUsersResponse.json();
         connectedUsers = connectedUsers.filter((user: { nickName: string | null; }) => user.nickName !== nickname);
@@ -61,18 +65,13 @@ const ChatComponent = () => {
     }
 
     function logTheMessage(payload: Stomp.Message) {
-        console.log('the message has been logged')
-        console.log('the payload is', payload.body)
         const user = JSON.parse(payload.body);
         findAndDisplayConnectedUsers().then();
-        console.log('the user is', user)
         setNewUser(user.nickName);
-        if (user.status === 'ONLINE') {
-            console.log('the user is online')
+        if (user.status === 'ONLINE' && user.nickName !== nickname) {
+
             setIsUserConnected(true);
-        }
-        else if (user.status === 'OFFLINE') {
-            console.log('the user is offline')
+        } else if (user.status === 'OFFLINE' && user.nickName !== nickname) {
             setIsUserDisconnected(true);
         }
         setTimeout(() => {
@@ -81,6 +80,7 @@ const ChatComponent = () => {
         }, 2000);
 
     }
+
     function onConnected() {
         stompClient?.subscribe(`/topic/public`, logTheMessage);
         stompClient?.subscribe(`/user/${nickname}/queue/messages`, onMessageReceived);
@@ -88,15 +88,14 @@ const ChatComponent = () => {
             {},
             JSON.stringify({nickName: nickname, fullName: fullname, status: 'ONLINE'})
         );
-        console.log('the nickname is', nickname)
-        console.log('the fullname is', fullname)
+
 
         setUser(nickname);
         findAndDisplayConnectedUsers().then();
     }
 
     function onError() {
-        console.log('error')
+
     }
 
     useEffect(() => {
@@ -128,6 +127,7 @@ const ChatComponent = () => {
             // @ts-ignore
             displayMessage(nickname, messageContent);
         }
+        setMessage('');
         event.preventDefault();
     }
 
@@ -141,11 +141,12 @@ const ChatComponent = () => {
 
         router.push('/');
     }
+
     async function fetchAndDisplayUserChat() {
-        console.log('before the if statement')
-        console.log('selectedUserId', selectedUserId)
+
+
         if (selectedUserId) {
-            console.log('has entered the fetchAndDisplayUserChat function')
+
             const userChatResponse = await fetch(`http://localhost:8088/messages/${nickname}/${selectedUserId}`);
             const userChat = await userChatResponse.json();
             setChatHistory(userChat);
@@ -157,13 +158,14 @@ const ChatComponent = () => {
             // @ts-ignore
             //this is dumb but it works
             selectedUserRef.current = selectedUserId;
-        fetchAndDisplayUserChat().then();
+            fetchAndDisplayUserChat().then();
         }
     }, [selectedUserId]);
+
     function displayMessage(senderId: string, content: string) {
         setChatHistory((prevChatHistory) => [
             ...prevChatHistory,
-            { senderId, content, timestamp: new Date() },
+            {senderId, content, timestamp: new Date()},
         ]);
     }
 
@@ -185,7 +187,7 @@ const ChatComponent = () => {
                                     onClick={() => {
                                         setSelectedUserId(user.nickName);
                                         // Reset unread messages count when user is selected
-                                        setUnreadMessagesCount((prevCount) => ({ ...prevCount, [user.nickName]: 0 }));
+                                        setUnreadMessagesCount((prevCount) => ({...prevCount, [user.nickName]: 0}));
                                     }}
                                 >
                                     <img
@@ -196,7 +198,8 @@ const ChatComponent = () => {
                                     <span className="font-medium relative">
                         {user.nickName}
                                         {unreadMessagesCount[user.nickName] > 0 && (
-                                            <span className="absolute top-0 right-0 bg-red-500 text-white rounded-full px-2">
+                                            <span
+                                                className="absolute top-0 right-0 bg-red-500 text-white rounded-full px-2">
                                 {unreadMessagesCount[user.nickName]}
                             </span>
                                         )}
@@ -214,12 +217,14 @@ const ChatComponent = () => {
                         </div>
                     </div>
                     {isUserConnected && (
-                        <div className="absolute bottom-0 mb-4 w-[250px] p-4 bg-green-500 text-white rounded-md shadow-md">
+                        <div
+                            className="absolute bottom-0 mb-4 w-[250px] p-4 bg-green-500 text-white rounded-md shadow-md">
                             {`${newUser} has joined the chat`}
                         </div>
                     )}
                     {isUserDisconnected && (
-                        <div className="absolute bottom-0 mb-4 w-[250px] p-4 bg-red-500 text-white rounded-md shadow-md">
+                        <div
+                            className="absolute bottom-0 mb-4 w-[250px] p-4 bg-red-500 text-white rounded-md shadow-md">
                             {`${newUser} has left the chat`}
                         </div>
                     )}
@@ -240,12 +245,13 @@ const ChatComponent = () => {
                                     >
                                         <div
                                             className={`bg-gray-200 rounded-lg p-3 ${
-                                                chat.senderId === nickname ? 'self-end' : 'self-start'
+                                                chat.senderId === nickname ? 'self-end bg-indigo-500 text-white' : 'self-start '
                                             }`}
                                         >
                                             {chat.content}
                                         </div>
-                                        <img src="https://i.pravatar.cc/40" alt="User Avatar" className="w-8 h-8 rounded-full ml-2" />
+                                        <img src="https://i.pravatar.cc/40" alt="User Avatar"
+                                             className="w-8 h-8 rounded-full ml-2"/>
                                     </div>
                                 ))}
                             </div>
@@ -254,6 +260,7 @@ const ChatComponent = () => {
                                     type="text"
                                     onChange={(e) => setMessage(e.target.value)}
                                     id="message"
+                                    value={message}
                                     placeholder="Type your message..."
                                     className="flex-1 border border-gray-300 rounded-l-md px-4 py-2 focus:outline-none"
                                 />

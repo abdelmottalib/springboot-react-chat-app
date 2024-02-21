@@ -155,7 +155,7 @@ function sendMessage(event) {
 
 async function onMessageReceived(payload) {
     await findAndDisplayConnectedUsers();
-    console.log('Message received', payload);
+    
     const message = JSON.parse(payload.body);
     if (selectedUserId && selectedUserId === message.senderId) {
         displayMessage(message.senderId, message.content);

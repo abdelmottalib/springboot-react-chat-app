@@ -6,9 +6,7 @@ import Stomp, {Client} from 'stompjs';
 import {router} from "next/client";
 
 const ChatComponent = () => {
-    const searchParams = useSearchParams();
     const [stompClient, setStompClient] = useState<Client | null>(null);
-
     const selectedUserRef = useRef(null);
     const [nickname, setNickname] = useState<string | null>('');
     const [fullname, setFullname] = useState<string | null>('');
@@ -22,20 +20,19 @@ const ChatComponent = () => {
     const [newUser, setNewUser] = useState<string>('');
     const [isUserConnected, setIsUserConnected] = useState<boolean>(false);
     const [isUserDisconnected, setIsUserDisconnected] = useState<boolean>(false);
+
     const router = useRouter();
+    const searchParams = useSearchParams();
 
     function onMessageReceived(payload: Stomp.Message) {
         findAndDisplayConnectedUsers().then();
         const message = JSON.parse(payload.body);
-
         const selectedUser = selectedUserRef.current;
         if (selectedUser && selectedUser === message.senderId) {
 
             displayMessage(message.senderId, message.content);
             showNotificationBanner();
         }
-
-
         setUnreadMessagesCount((prevCount) => ({
             ...prevCount,
             [message.senderId]: (prevCount[message.senderId] || 0) + 1,
@@ -116,6 +113,8 @@ const ChatComponent = () => {
 
     function handleSubmit(event: any) {
         const messageContent = message.trim();
+        // @ts-ignore
+        setUnreadMessagesCount((prevCount) => ({...prevCount, [selectedUserId]: 0}));
         if (messageContent && stompClient) {
             const chatMessage = {
                 senderId: nickname,
@@ -131,7 +130,6 @@ const ChatComponent = () => {
         event.preventDefault();
     }
 
-
     function onLogout() {
         // @ts-ignore
         stompClient.send("/app/user.disconnectUser",
@@ -143,10 +141,7 @@ const ChatComponent = () => {
     }
 
     async function fetchAndDisplayUserChat() {
-
-
         if (selectedUserId) {
-
             const userChatResponse = await fetch(`http://localhost:8088/messages/${nickname}/${selectedUserId}`);
             const userChat = await userChatResponse.json();
             setChatHistory(userChat);

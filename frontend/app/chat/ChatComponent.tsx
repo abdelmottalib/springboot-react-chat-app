@@ -21,6 +21,7 @@ const ChatComponent = () => {
     const [isUserConnected, setIsUserConnected] = useState<boolean>(false);
     const [isUserDisconnected, setIsUserDisconnected] = useState<boolean>(false);
 
+
     const router = useRouter();
     const searchParams = useSearchParams();
 
@@ -29,7 +30,6 @@ const ChatComponent = () => {
         const message = JSON.parse(payload.body);
         const selectedUser = selectedUserRef.current;
         if (selectedUser && selectedUser === message.senderId) {
-
             displayMessage(message.senderId, message.content);
             showNotificationBanner();
         }
@@ -50,7 +50,7 @@ const ChatComponent = () => {
         setShowNotification(true);
         setTimeout(() => {
             setShowNotification(false);
-        }, 5000); // Hide notification after 5 seconds
+        }, 4000);
     }
 
     async function findAndDisplayConnectedUsers() {

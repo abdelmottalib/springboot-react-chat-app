@@ -196,6 +196,7 @@ const ChatComponent = () => {
                                     }`}
                                     onClick={() => {
                                         setSelectedUserId(user.nickName);
+
                                         setRecipient({
                                             nickName: user.nickName,
                                             fullName: user.fullName,

@@ -1,21 +1,40 @@
 package com.konami.websocket.chatroom;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.konami.websocket.chat.ChatMessage;
+import com.konami.websocket.user.User;
+import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.springframework.data.annotation.Id;
-import org.springframework.data.mongodb.core.mapping.Document;
+
+import java.util.List;
 
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-@Document
+@Entity
 public class ChatRoom {
     @Id
-    private String id;
+    @GeneratedValue
+    private Long id;
+
     private String chatId;
-    private String senderId;
-    private String recipientId;
+
+    @ManyToOne
+    @JoinColumn(name = "sender_id")
+    private User sender;
+
+    @ManyToOne
+    @JoinColumn(name = "recipient_id")
+    private User recipient;
+
+    @OneToMany(mappedBy = "chatRoom", cascade = CascadeType.ALL)
+    private List<ChatMessage> messages;
+    @Override
+    public String toString() {
+        return "ChatRoom(id=" + id + ", chatId=" + chatId + ", messageCount=" + messages.size() + ")";
+    }
 }

@@ -1,6 +1,8 @@
 package com.konami.websocket.user;
 
-
+import com.konami.websocket.user.Status;
+import com.konami.websocket.user.User;
+import com.konami.websocket.user.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -27,5 +29,8 @@ public class UserService {
 
     public List<User> findConnectedUsers() {
         return repository.findAllByStatus(Status.ONLINE);
+    }
+    public User findUserByNickName(String nickName) {
+        return repository.findByNickName(nickName);
     }
 }

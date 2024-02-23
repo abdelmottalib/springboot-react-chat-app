@@ -20,23 +20,29 @@ const ChatComponent = () => {
     const [newUser, setNewUser] = useState<string>('');
     const [isUserConnected, setIsUserConnected] = useState<boolean>(false);
     const [isUserDisconnected, setIsUserDisconnected] = useState<boolean>(false);
-
+    const [sender, setSender] = useState<{nickName:string, fullName:string, status:"ONLINE"|"OFFLINE"} | null>(null);
+    const [recipient, setRecipient] = useState<{nickName:string, fullName:string, status:"ONLINE"|"OFFLINE"} | null>(null);
 
     const router = useRouter();
     const searchParams = useSearchParams();
 
     function onMessageReceived(payload: Stomp.Message) {
         findAndDisplayConnectedUsers().then();
+        console.log("received message");
         const message = JSON.parse(payload.body);
-        const selectedUser = selectedUserRef.current;
-        if (selectedUser && selectedUser === message.senderId) {
+        console.log(message);
+        const recipient = selectedUserRef.current;
+        console.log("the recipi: ", recipient);
+        if (recipient && recipient === message.senderId) {
             displayMessage(message.senderId, message.content);
             showNotificationBanner();
         }
+        console.log(message.senderId, message.content, message.timestamp);
         setUnreadMessagesCount((prevCount) => ({
             ...prevCount,
             [message.senderId]: (prevCount[message.senderId] || 0) + 1,
         }));
+        console.log("unreadMessagesCount", unreadMessagesCount);
         const notifiedUser = connectedUsers.find((user) => user.nickName === message.senderId);
         if (notifiedUser && selectedUserId !== message.senderId) {
             const updatedConnectedUsers = connectedUsers.map((user) =>
@@ -45,7 +51,9 @@ const ChatComponent = () => {
             setConnectedUsers(updatedConnectedUsers);
         }
     }
-
+    useEffect(() => {
+        console.log(unreadMessagesCount);
+    }, [unreadMessagesCount]);
     function showNotificationBanner() {
         setShowNotification(true);
         setTimeout(() => {
@@ -85,7 +93,8 @@ const ChatComponent = () => {
             {},
             JSON.stringify({nickName: nickname, fullName: fullname, status: 'ONLINE'})
         );
-
+        // @ts-ignore
+        setSender({nickName: nickname, fullName: fullname, status: "ONLINE"});
 
         setUser(nickname);
         findAndDisplayConnectedUsers().then();
@@ -117,8 +126,8 @@ const ChatComponent = () => {
         setUnreadMessagesCount((prevCount) => ({...prevCount, [selectedUserId]: 0}));
         if (messageContent && stompClient) {
             const chatMessage = {
-                senderId: nickname,
-                recipientId: selectedUserId,
+                sender,
+                recipient,
                 content: messageContent,
                 timestamp: new Date()
             };
@@ -141,9 +150,13 @@ const ChatComponent = () => {
     }
 
     async function fetchAndDisplayUserChat() {
-        if (selectedUserId) {
-            const userChatResponse = await fetch(`http://localhost:8088/messages/${nickname}/${selectedUserId}`);
+        console.log("sender", sender, "recipient", recipient)
+        console.log("selectedUserId", selectedUserId, "nickname", nickname)
+        if (selectedUserId && sender && recipient) {
+            console.log(sender, recipient)
+            const userChatResponse = await fetch(`http://localhost:8088/messages/${sender.nickName}/${recipient.nickName}`);
             const userChat = await userChatResponse.json();
+            console.log("userChat" + userChat);
             setChatHistory(userChat);
         }
     }
@@ -181,6 +194,11 @@ const ChatComponent = () => {
                                     }`}
                                     onClick={() => {
                                         setSelectedUserId(user.nickName);
+                                        setRecipient({
+                                            nickName: user.nickName,
+                                            fullName: user.fullName,
+                                            status: "ONLINE"
+                                        });
                                         // Reset unread messages count when user is selected
                                         setUnreadMessagesCount((prevCount) => ({...prevCount, [user.nickName]: 0}));
                                     }}
@@ -191,14 +209,14 @@ const ChatComponent = () => {
                                         className="w-8 h-8 rounded-full mr-2"
                                     />
                                     <span className="font-medium relative">
-                        {user.nickName}
+                    {user.nickName}
                                         {unreadMessagesCount[user.nickName] > 0 && (
                                             <span
-                                                className="absolute top-0 right-0 text-white rounded-full px-2">
-                                {unreadMessagesCount[user.nickName]}
-                            </span>
+                                                className="absolute w-[15px] -left-4 h-[15px] flex items-center text-xs justify-center bg-red-500 text-white rounded-full -mr-2 -mt-2">
+                            {unreadMessagesCount[user.nickName]}
+                        </span>
                                         )}
-                    </span>
+                </span>
                                 </li>
                             ))}
                         </ul>
@@ -228,7 +246,8 @@ const ChatComponent = () => {
 
 
                 {/* Chat Area */}
-                <div className="w-3/4 bg-white max-h-full rounded-lg shadow-md p-4 flex flex-col justify-between overflow-hidden">
+                <div
+                    className="w-3/4 bg-white max-h-full rounded-lg shadow-md p-4 flex flex-col justify-between overflow-hidden">
                     {selectedUserId ? (
                         <>
                             <div id="chat-messages" className=" overflow-y-auto mb-4 max-h-[670px]  2xl:max-h-[2350px]">

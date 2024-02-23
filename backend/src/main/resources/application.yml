@@ -1,11 +1,21 @@
-spring:
-  data:
-    mongodb:
-      username: konami
-      password: konami
-      host: localhost
-      port: 27017
-      database: chat_app
-      authentication-database: admin
+#logging:
+#  level:
+#    ROOT: DEBUG
 server:
   port: 8088
+  error:
+    include-message: always
+spring:
+  main:
+    web-application-type: servlet
+  datasource:
+    url: jdbc:postgresql://localhost:5432/chat
+  jpa:
+    hibernate:
+      #If you have set spring.jpa.hibernate.ddl-auto to validate, it means that Hibernate will not attempt to update the database schema automatically. Instead, it will validate the existing database schema against the entity mappings and raise an exception if there are inconsistencies.
+      ddl-auto: create-drop
+    show-sql: false
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        format_sql: true

@@ -18,40 +18,29 @@ public class ChatMessageService {
     private final ChatRoomService chatRoomService;
 
     public ChatMessage save(ChatMessage chatMessage) {
-        System.out.println("the chat message is: " + chatMessage.toString());
         var chatRoomId = chatRoomService
                 .getChatRoomId(chatMessage.getSender(), chatMessage.getRecipient(), true)
-                .orElseThrow(); // You can create your own dedicated exception
+                .orElseThrow();
         ChatRoom chatRoom = chatRoomRepository.findByChatId(chatRoomId)
                 .orElseGet(() -> {
-                    System.out.println("Creating a new ChatRoom");
                     return ChatRoom.builder()
                             .chatId(chatRoomId)
-                            .sender(chatMessage.getSender())  // Set the sender
-                            .recipient(chatMessage.getRecipient())  // Set the recipient
+                            .sender(chatMessage.getSender())
+                            .recipient(chatMessage.getRecipient())
                             .build();
                 });
 
 
         chatMessage.setChatRoom(chatRoom);
-
-//        var chatRoom = ChatRoom.builder().chatId(chatRoomId).build();
-//        chatMessage.setChatRoom(chatRoom);
         repository.save(chatMessage);
         return chatMessage;
     }
 
     public List<ChatMessage> findChatMessages(User sender, User recipient) {
-        System.out.println("inside the findChatMessages method");
-        System.out.println("the sender is: " + sender);
-        System.out.println("the recipient is: " + recipient);
-//        var chatroom = chatRoomService.getChatRoomId(sender, recipient, false);
-        var chatroom =  chatRoomRepository.findBySenderAndRecipient(sender, recipient);
+        var chatroom = chatRoomRepository.findBySenderAndRecipient(sender, recipient);
         if (chatroom.isEmpty()) {
             chatroom = chatRoomRepository.findBySenderAndRecipient(recipient, sender);
         }
-        System.out.println("the chatroom is: " + chatroom);
-        System.out.println("hehdaf: " + repository.findByChatRoom(chatroom));
         return repository.findByChatRoom(chatroom);
     }
 }

@@ -2,7 +2,6 @@ package com.konami.websocket.chatroom;
 
 import com.konami.websocket.user.User;
 import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.mongodb.repository.MongoRepository;
 
 import java.util.Optional;
 

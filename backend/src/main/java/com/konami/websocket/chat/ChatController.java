@@ -44,7 +44,6 @@ public class ChatController {
             @PathVariable String recipientNickName) {
         User sender = userService.findUserByNickName(senderNickName);
         User recipient = userService.findUserByNickName(recipientNickName);
-        System.out.println("senderId: " + sender.getNickName() + " recipientId: " + recipient.getNickName());
         return ResponseEntity.ok(chatMessageService.findChatMessages(sender, recipient));
     }
 }

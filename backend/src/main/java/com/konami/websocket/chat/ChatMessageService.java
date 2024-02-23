@@ -22,14 +22,11 @@ public class ChatMessageService {
                 .getChatRoomId(chatMessage.getSender(), chatMessage.getRecipient(), true)
                 .orElseThrow();
         ChatRoom chatRoom = chatRoomRepository.findByChatId(chatRoomId)
-                .orElseGet(() -> {
-                    return ChatRoom.builder()
-                            .chatId(chatRoomId)
-                            .sender(chatMessage.getSender())
-                            .recipient(chatMessage.getRecipient())
-                            .build();
-                });
-
+                .orElseGet(() -> ChatRoom.builder()
+                        .chatId(chatRoomId)
+                        .sender(chatMessage.getSender())
+                        .recipient(chatMessage.getRecipient())
+                        .build());
 
         chatMessage.setChatRoom(chatRoom);
         repository.save(chatMessage);

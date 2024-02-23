@@ -3,6 +3,8 @@ import {useRouter, useSearchParams} from 'next/navigation'
 import React, {useEffect, useRef, useState} from 'react'
 import SockJS from 'sockjs-client';
 import Stomp, {Client} from 'stompjs';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faUser } from '@fortawesome/free-solid-svg-icons';
 import {router} from "next/client";
 
 const ChatComponent = () => {
@@ -200,23 +202,21 @@ const ChatComponent = () => {
                                             status: "ONLINE"
                                         });
                                         // Reset unread messages count when user is selected
-                                        setUnreadMessagesCount((prevCount) => ({...prevCount, [user.nickName]: 0}));
+                                        setUnreadMessagesCount((prevCount) => ({ ...prevCount, [user.nickName]: 0 }));
                                     }}
                                 >
-                                    <img
-                                        src="https://i.pravatar.cc/40"
-                                        alt="User Avatar"
-                                        className="w-8 h-8 rounded-full mr-2"
-                                    />
+                                    <div className="w-8 h-8 rounded-full bg-gray-400 mr-2 flex items-center justify-center">
+                                        <FontAwesomeIcon icon={faUser} className="text-white" />
+                                    </div>
                                     <span className="font-medium relative">
-                    {user.nickName}
+                                    {user.nickName}
                                         {unreadMessagesCount[user.nickName] > 0 && (
                                             <span
                                                 className="absolute w-[15px] -left-4 h-[15px] flex items-center text-xs justify-center bg-red-500 text-white rounded-full -mr-2 -mt-2">
-                            {unreadMessagesCount[user.nickName]}
-                        </span>
+                                            {unreadMessagesCount[user.nickName]}
+                                        </span>
                                         )}
-                </span>
+                                </span>
                                 </li>
                             ))}
                         </ul>
@@ -241,13 +241,10 @@ const ChatComponent = () => {
                             {`${newUser} has left the chat`}
                         </div>
                     )}
-
                 </div>
 
-
                 {/* Chat Area */}
-                <div
-                    className="w-3/4 bg-white max-h-full rounded-lg shadow-md p-4 flex flex-col justify-between overflow-hidden">
+                <div className="w-3/4 bg-white max-h-full rounded-lg shadow-md p-4 flex flex-col justify-between overflow-hidden">
                     {selectedUserId ? (
                         <>
                             <div id="chat-messages" className=" overflow-y-auto mb-4 max-h-[670px]  2xl:max-h-[2350px]">
@@ -267,11 +264,9 @@ const ChatComponent = () => {
                                         >
                                             {chat.content}
                                         </div>
-                                        <img
-                                            src="https://i.pravatar.cc/40"
-                                            alt="User Avatar"
-                                            className="w-8 h-8 rounded-full ml-2"
-                                        />
+                                        <div className="w-8 h-8 rounded-full bg-gray-400 ml-2 flex items-center justify-center">
+                                            <FontAwesomeIcon icon={faUser} className="text-white" />
+                                        </div>
                                     </div>
                                 ))}
                             </div>

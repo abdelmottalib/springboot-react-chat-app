@@ -3,8 +3,8 @@ import {useRouter, useSearchParams} from 'next/navigation'
 import React, {useEffect, useRef, useState} from 'react'
 import SockJS from 'sockjs-client';
 import Stomp, {Client} from 'stompjs';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faUser } from '@fortawesome/free-solid-svg-icons';
+import {FontAwesomeIcon} from '@fortawesome/react-fontawesome';
+import {faUser} from '@fortawesome/free-solid-svg-icons';
 import {router} from "next/client";
 
 const ChatComponent = () => {
@@ -22,29 +22,32 @@ const ChatComponent = () => {
     const [newUser, setNewUser] = useState<string>('');
     const [isUserConnected, setIsUserConnected] = useState<boolean>(false);
     const [isUserDisconnected, setIsUserDisconnected] = useState<boolean>(false);
-    const [sender, setSender] = useState<{nickName:string, fullName:string, status:"ONLINE"|"OFFLINE"} | null>(null);
-    const [recipient, setRecipient] = useState<{nickName:string, fullName:string, status:"ONLINE"|"OFFLINE"} | null>(null);
+    const [sender, setSender] = useState<{
+        nickName: string,
+        fullName: string,
+        status: "ONLINE" | "OFFLINE"
+    } | null>(null);
+    const [recipient, setRecipient] = useState<{
+        nickName: string,
+        fullName: string,
+        status: "ONLINE" | "OFFLINE"
+    } | null>(null);
 
     const router = useRouter();
     const searchParams = useSearchParams();
 
     function onMessageReceived(payload: Stomp.Message) {
         findAndDisplayConnectedUsers().then();
-        console.log("received message");
         const message = JSON.parse(payload.body);
-        console.log(message);
         const recipient = selectedUserRef.current;
-        console.log("the recipi: ", recipient);
         if (recipient && recipient === message.senderId) {
             displayMessage(message.senderId, message.content);
             showNotificationBanner();
         }
-        console.log(message.senderId, message.content, message.timestamp);
         setUnreadMessagesCount((prevCount) => ({
             ...prevCount,
             [message.senderId]: (prevCount[message.senderId] || 0) + 1,
         }));
-        console.log("unreadMessagesCount", unreadMessagesCount);
         const notifiedUser = connectedUsers.find((user) => user.nickName === message.senderId);
         if (notifiedUser && selectedUserId !== message.senderId) {
             const updatedConnectedUsers = connectedUsers.map((user) =>
@@ -53,9 +56,7 @@ const ChatComponent = () => {
             setConnectedUsers(updatedConnectedUsers);
         }
     }
-    useEffect(() => {
-        console.log(unreadMessagesCount);
-    }, [unreadMessagesCount]);
+
     function showNotificationBanner() {
         setShowNotification(true);
         setTimeout(() => {
@@ -76,7 +77,6 @@ const ChatComponent = () => {
         findAndDisplayConnectedUsers().then();
         setNewUser(user.nickName);
         if (user.status === 'ONLINE' && user.nickName !== nickname) {
-
             setIsUserConnected(true);
         } else if (user.status === 'OFFLINE' && user.nickName !== nickname) {
             setIsUserDisconnected(true);
@@ -85,7 +85,6 @@ const ChatComponent = () => {
             setIsUserConnected(false);
             setIsUserDisconnected(false);
         }, 2000);
-
     }
 
     function onConnected() {
@@ -103,7 +102,7 @@ const ChatComponent = () => {
     }
 
     function onError() {
-
+        console.log('Error occurred while connecting to the server');
     }
 
     useEffect(() => {
@@ -117,12 +116,13 @@ const ChatComponent = () => {
             setStompClient(Stomp.over(socket));
         }
     }, [nickname, fullname]);
+
     useEffect(() => {
         setNickname(searchParams.get('nickname'));
         setFullname(searchParams.get('fullname'));
     }, [searchParams])
 
-    function handleSubmit(event:React.FormEvent) {
+    function handleSubmit(event: React.FormEvent) {
         const messageContent = message.trim();
         // @ts-ignore
         setUnreadMessagesCount((prevCount) => ({...prevCount, [selectedUserId]: 0}));
@@ -152,13 +152,10 @@ const ChatComponent = () => {
     }
 
     async function fetchAndDisplayUserChat() {
-        console.log("sender", sender, "recipient", recipient)
-        console.log("selectedUserId", selectedUserId, "nickname", nickname)
-        if (selectedUserId && sender && recipient) {
-            console.log(sender, recipient)
-            const userChatResponse = await fetch(`http://localhost:8088/messages/${sender.nickName}/${recipient.nickName}`);
+        if (selectedUserId) {
+            const userChatResponse = await fetch(`http://localhost:8088/messages/${nickname}/${selectedUserId}`);
             const userChat = await userChatResponse.json();
-            console.log("userChat" + userChat);
+            console.log(userChat)
             setChatHistory(userChat);
         }
     }
@@ -175,12 +172,15 @@ const ChatComponent = () => {
     function displayMessage(senderId: string, content: string) {
         setChatHistory((prevChatHistory) => [
             ...prevChatHistory,
-            {senderId, content, timestamp: new Date()},
+            {sender:{nickName:senderId}, content, timestamp: new Date()},
         ]);
     }
 
+    useEffect(() => {
+        console.log(chatHistory)
+    }, [chatHistory]);
     return (
-        <div className="h-screen font-sans bg-gray-100 flex flex-col h-full">
+        <div className="h-screen font-sans bg-gray-100 flex flex-col">
             <h2 className="text-center text-2xl font-bold py-8 bg-indigo-600 text-white">{user}</h2>
             <div className="flex h-full">
                 {/* Users List */}
@@ -203,11 +203,12 @@ const ChatComponent = () => {
                                             status: "ONLINE"
                                         });
                                         // Reset unread messages count when user is selected
-                                        setUnreadMessagesCount((prevCount) => ({ ...prevCount, [user.nickName]: 0 }));
+                                        setUnreadMessagesCount((prevCount) => ({...prevCount, [user.nickName]: 0}));
                                     }}
                                 >
-                                    <div className="w-8 h-8 rounded-full bg-gray-400 mr-2 flex items-center justify-center">
-                                        <FontAwesomeIcon icon={faUser} className="text-white" />
+                                    <div
+                                        className="w-8 h-8 rounded-full bg-gray-400 mr-2 flex items-center justify-center">
+                                        <FontAwesomeIcon icon={faUser} className="text-white"/>
                                     </div>
                                     <span className="font-medium relative">
                                     {user.nickName}
@@ -245,7 +246,8 @@ const ChatComponent = () => {
                 </div>
 
                 {/* Chat Area */}
-                <div className="w-3/4 bg-white max-h-full rounded-lg shadow-md p-4 flex flex-col justify-between overflow-hidden">
+                <div
+                    className="w-3/4 bg-white max-h-full rounded-lg shadow-md p-4 flex flex-col justify-between overflow-hidden">
                     {selectedUserId ? (
                         <>
                             <div id="chat-messages" className=" overflow-y-auto mb-4 max-h-[670px]  2xl:max-h-[2350px]">
@@ -253,20 +255,21 @@ const ChatComponent = () => {
                                     <div
                                         key={index}
                                         className={`mb-4 flex ${
-                                            chat.senderId === nickname ? 'justify-end' : 'justify-start'
+                                            chat.sender.nickName === nickname ? 'justify-end' : 'justify-start'
                                         } items-end`}
                                     >
                                         <div
                                             className={`bg-gray-200 rounded-lg p-3 ${
-                                                chat.senderId === nickname
+                                                chat.sender.nickName === nickname
                                                     ? 'self-end bg-indigo-500 text-white'
                                                     : 'self-start '
                                             }`}
                                         >
                                             {chat.content}
                                         </div>
-                                        <div className="w-8 h-8 rounded-full bg-gray-400 ml-2 flex items-center justify-center">
-                                            <FontAwesomeIcon icon={faUser} className="text-white" />
+                                        <div
+                                            className="w-8 h-8 rounded-full bg-gray-400 ml-2 flex items-center justify-center">
+                                            <FontAwesomeIcon icon={faUser} className="text-white"/>
                                         </div>
                                     </div>
                                 ))}

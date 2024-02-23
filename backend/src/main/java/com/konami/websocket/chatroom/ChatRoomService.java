@@ -20,6 +20,8 @@ public class ChatRoomService {
         return chatRoomRepository
                 .findBySenderAndRecipient(sender, recipient)
                 .map(ChatRoom::getChatId)
+                .or(() -> chatRoomRepository.findBySenderAndRecipient(recipient, sender)
+                        .map(ChatRoom::getChatId))
                 .or(() -> {
                     if (createNewRoomIfNotExists) {
                         var chatId = createChatId(sender, recipient);

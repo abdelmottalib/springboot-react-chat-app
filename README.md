@@ -13,7 +13,7 @@ A simple chat application built with Spring Boot for the backend, PostgreSQL for
 1. **Clone the repository:**
 
     ```bash
-    git clone https://github.com/abdelmottalib/springboot-next-chat-app
+    git clone https://github.com/abdelmottalib/springboot-react-chat-app
     ```
 
 2. **Configure Database:**

@@ -14,7 +14,6 @@ A simple chat application built with Spring Boot for the backend, PostgreSQL for
 
     ```bash
     git clone https://github.com/abdelmottalib/springboot-next-chat-app
-    cd backend
     ```
 
 2. **Configure Database:**

@@ -5,14 +5,16 @@ import SockJS from 'sockjs-client';
 import Stomp, {Client} from 'stompjs';
 import {FontAwesomeIcon} from '@fortawesome/react-fontawesome';
 import {faUser} from '@fortawesome/free-solid-svg-icons';
-import {router} from "next/client";
 
 const ChatComponent = () => {
+    //constants
+    const WS_BASE_URL = 'http://localhost:8088/ws';
+    const API_BASE_URL = 'http://localhost:8088';
+    // States
     const [stompClient, setStompClient] = useState<Client | null>(null);
-    const selectedUserRef = useRef(null);
-    const [nickname, setNickname] = useState<string | null>('');
-    const [fullname, setFullname] = useState<string | null>('');
-    const [selectedUserId, setSelectedUserId] = useState<string | null>('');
+    const [nickname, setNickname] = useState<string>('');
+    const [fullname, setFullname] = useState<string>('');
+    const [selectedUserId, setSelectedUserId] = useState<string>('');
     const [connectedUsers, setConnectedUsers] = useState<any[]>([]);
     const [message, setMessage] = useState<any>('');
     const [user, setUser] = useState<any>('');
@@ -33,9 +35,60 @@ const ChatComponent = () => {
         status: "ONLINE" | "OFFLINE"
     } | null>(null);
 
+    // Refs
+    const selectedUserRef = useRef('');
+
+    // Router and Search Params
     const router = useRouter();
     const searchParams = useSearchParams();
 
+    // Effects
+
+    // Effect for connecting to WebSocket
+    useEffect(() => {
+        if (nickname && fullname) {
+            const socket = new SockJS(`${WS_BASE_URL}`);
+            setStompClient(Stomp.over(socket));
+        }
+    }, [nickname, fullname]);
+
+    // Effect for setting nickname and fullname from search params
+    useEffect(() => {
+        setNickname(searchParams.get('nickname')!);
+        setFullname(searchParams.get('fullname')!);
+    }, [searchParams]);
+
+    // Effect for connecting to WebSocket and subscribing to channels
+    useEffect(() => {
+        const onConnected = () => {
+            stompClient?.subscribe(`/topic/public`, logTheMessage);
+            stompClient?.subscribe(`/user/${nickname}/queue/messages`, onMessageReceived);
+            stompClient?.send("/app/user.addUser", {}, JSON.stringify({ nickName: nickname, fullName: fullname, status: 'ONLINE' }));
+            setSender({ nickName: nickname, fullName: fullname, status: "ONLINE" });
+            setUser(nickname);
+            findAndDisplayConnectedUsers().then();
+        };
+
+        const onError = () => {
+            console.log('Error occurred while connecting to the server');
+        };
+
+        if (stompClient && !stompClient.connected) {
+            stompClient.connect({}, onConnected, onError);
+        }
+    }, [stompClient, nickname, fullname]);
+
+    // Effect for fetching and displaying user chat when selectedUserId changes
+    useEffect(() => {
+        if (selectedUserId) {
+            selectedUserRef.current = selectedUserId;
+            fetchAndDisplayUserChat().then();
+        }
+    }, [selectedUserId]);
+
+    // Functions
+
+    // Function to handle message received from WebSocket
     function onMessageReceived(payload: Stomp.Message) {
         findAndDisplayConnectedUsers().then();
         const message = JSON.parse(payload.body);
@@ -51,12 +104,13 @@ const ChatComponent = () => {
         const notifiedUser = connectedUsers.find((user) => user.nickName === message.senderId);
         if (notifiedUser && selectedUserId !== message.senderId) {
             const updatedConnectedUsers = connectedUsers.map((user) =>
-                user.nickName === message.senderId ? {...user, unreadMessages: (user.unreadMessages || 0) + 1} : user
+                user.nickName === message.senderId ? { ...user, unreadMessages: (user.unreadMessages || 0) + 1 } : user
             );
             setConnectedUsers(updatedConnectedUsers);
         }
     }
 
+    // Function to display notification banner
     function showNotificationBanner() {
         setShowNotification(true);
         setTimeout(() => {
@@ -64,14 +118,15 @@ const ChatComponent = () => {
         }, 4000);
     }
 
+    // Function to find and display connected users
     async function findAndDisplayConnectedUsers() {
-
-        const connectedUsersResponse = await fetch('http://localhost:8088/users');
+        const connectedUsersResponse = await fetch(`${API_BASE_URL}/users`);
         let connectedUsers = await connectedUsersResponse.json();
         connectedUsers = connectedUsers.filter((user: { nickName: string | null; }) => user.nickName !== nickname);
         setConnectedUsers(connectedUsers);
     }
 
+    // Function to handle log message from WebSocket
     function logTheMessage(payload: Stomp.Message) {
         const user = JSON.parse(payload.body);
         findAndDisplayConnectedUsers().then();
@@ -87,45 +142,12 @@ const ChatComponent = () => {
         }, 2000);
     }
 
-    function onConnected() {
-        stompClient?.subscribe(`/topic/public`, logTheMessage);
-        stompClient?.subscribe(`/user/${nickname}/queue/messages`, onMessageReceived);
-        stompClient?.send("/app/user.addUser",
-            {},
-            JSON.stringify({nickName: nickname, fullName: fullname, status: 'ONLINE'})
-        );
-        // @ts-ignore
-        setSender({nickName: nickname, fullName: fullname, status: "ONLINE"});
-
-        setUser(nickname);
-        findAndDisplayConnectedUsers().then();
-    }
-
-    function onError() {
-        console.log('Error occurred while connecting to the server');
-    }
-
-    useEffect(() => {
-        if (stompClient && !stompClient.connected) {
-            stompClient.connect({}, onConnected, onError);
-        }
-    }, [stompClient]);
-    useEffect(() => {
-        if (nickname && fullname) {
-            const socket = new SockJS('http://localhost:8088/ws');
-            setStompClient(Stomp.over(socket));
-        }
-    }, [nickname, fullname]);
-
-    useEffect(() => {
-        setNickname(searchParams.get('nickname'));
-        setFullname(searchParams.get('fullname'));
-    }, [searchParams])
-
+    // Function to handle form submission
     function handleSubmit(event: React.FormEvent) {
         const messageContent = message.trim();
-        // @ts-ignore
-        setUnreadMessagesCount((prevCount) => ({...prevCount, [selectedUserId]: 0}));
+        if (selectedUserId) {
+            setUnreadMessagesCount((prevCount) => ({ ...prevCount, [selectedUserId]: 0 }));
+        }
         if (messageContent && stompClient) {
             const chatMessage = {
                 sender,
@@ -134,51 +156,41 @@ const ChatComponent = () => {
                 timestamp: new Date()
             };
             stompClient.send("/app/chat", {}, JSON.stringify(chatMessage));
-            // @ts-ignore
             displayMessage(nickname, messageContent);
         }
         setMessage('');
         event.preventDefault();
     }
 
+    // Function to handle user logout
     function onLogout() {
-        // @ts-ignore
-        stompClient.send("/app/user.disconnectUser",
-            {},
-            JSON.stringify({nickName: nickname, fullName: fullname, status: 'OFFLINE'})
-        );
-
+        if (stompClient) {
+            stompClient.send("/app/user.disconnectUser",
+                {},
+                JSON.stringify({ nickName: nickname, fullName: fullname, status: 'OFFLINE' })
+            );
+        }
         router.push('/');
     }
 
+    // Function to fetch and display user chat
     async function fetchAndDisplayUserChat() {
         if (selectedUserId) {
-            const userChatResponse = await fetch(`http://localhost:8088/messages/${nickname}/${selectedUserId}`);
+            const userChatResponse = await fetch(`${API_BASE_URL}/messages/${nickname}/${selectedUserId}`);
             const userChat = await userChatResponse.json();
-            console.log(userChat)
             setChatHistory(userChat);
         }
     }
 
-    useEffect(() => {
-        if (selectedUserId) {
-            // @ts-ignore
-            //this is dumb but it works
-            selectedUserRef.current = selectedUserId;
-            fetchAndDisplayUserChat().then();
-        }
-    }, [selectedUserId]);
-
+    // Function to display chat message
     function displayMessage(senderId: string, content: string) {
         setChatHistory((prevChatHistory) => [
             ...prevChatHistory,
-            {sender:{nickName:senderId}, content, timestamp: new Date()},
+            { sender: { nickName: senderId }, content, timestamp: new Date() },
         ]);
     }
 
-    useEffect(() => {
-        console.log(chatHistory)
-    }, [chatHistory]);
+    // Return JSX
     return (
         <div className="h-screen font-sans bg-gray-100 flex flex-col">
             <h2 className="text-center text-2xl font-bold py-8 bg-indigo-600 text-white">{user}</h2>
